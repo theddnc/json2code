@@ -1,7 +1,9 @@
+import string
+
 __author__ = 'jzaczek'
 import io
-
 from json2code.tokens import TokenType, Token
+import inspect
 
 
 HEX_CHARS = u"abcdef01234567890"
@@ -11,7 +13,9 @@ ESCAPED_CHARS = u"\ \"/bfnrt"
 class Scanner:
     token = None
     current_byte = 0
+    scanned_byte = 0
 
+    # todo: kwargs instead of args?
     def __init__(self, file_name=None):
         if file_name is not None:
             self.file_input = io.open(file_name, encoding='utf-8')
@@ -19,15 +23,42 @@ class Scanner:
             self.file_input = None
 
     def advance(self):
-        try:
-            pass
-        except TokenMismatchException as e:
-            pass
+        # try parsing each token
+        self.file_input.seek(self.scanned_byte)
+        self.__skip_whitespace()
+        self.scanned_byte = self.file_input.tell()
+        self.current_byte = self.scanned_byte
+        member_list = inspect.getmembers(self, predicate=inspect.ismethod)
+        for (member_name, member_value) in member_list:
+            if member_name.startswith("_read"):
+                try:
+                    member_value()
+                except TokenMismatchException:
+                    pass
+                else:
+                    #print "Current byte: {0}\t Scanned byte: {1}".format(self.current_byte, self.scanned_byte)
+                    return
 
-    def require_token(self, token):
-        if self.token.type != token.type:
-            raise UnexpectedTokenException("Token with type: {0} and value {1} was unexpected".
-                                           format(self.token.type, self.token.value))
+        self.file_input.seek(self.scanned_byte)
+        value = self.file_input.readline()
+        raise TokenMismatchException("Unable to parse value: {0}.".format(value))
+
+    def require_token(self, token_type):
+        if self.token.type != token_type:
+            raise UnexpectedTokenException("Token with type: {0} and value {1} was unexpected. Expecting: {2}".
+                                           format(self.token.type, self.token.value, token_type))
+        else:
+            #print "Forwarding from scanned: {0} to current: {1}".format(self.scanned_byte, self.current_byte)
+            self.scanned_byte = self.current_byte
+
+    def peek(self, length):
+        self.__skip_whitespace()
+
+        self.file_input.seek(self.current_byte)
+        value = self.file_input.read(length)
+        self.file_input.seek(self.current_byte)
+
+        return value
 
     # TOKEN DEFINITIONS BELOW -----------------------------------------------------------------------------------------
 
@@ -222,7 +253,7 @@ class Scanner:
                 curr_pos = self.file_input.tell()
                 char = self.file_input.read(1)
 
-        self.file_input.seek(curr_pos)
+            self.file_input.seek(curr_pos)
 
         return value
 
@@ -233,8 +264,10 @@ class Scanner:
             raise NaNException("First char is not a '.' (dot), got: {0}.".format(dot))
 
         value += dot
-        char = self.file_input.read(1)
+
         curr_pos = self.file_input.tell()
+        char = self.file_input.read(1)
+
         while char.isnumeric():
             value += char
             curr_pos = self.file_input.tell()
@@ -247,26 +280,41 @@ class Scanner:
     def __read_exponent(self):
         value = u""
         char = self.file_input.read(1)
+
         if char != u"e" and char != u"E":
             raise NaNException("First char is neither 'e' nor 'E', got: {0}.".format(char))
-
         value += char
+
         char = self.file_input.read(1)
+
         if char == u"+" or char == u"-":
             value += char
-        else:
-            if not char.isnumeric():
-                raise NaNException("Following chars are not digits, got: {0}.".format(char))
+            char = self.file_input.read(1)
 
+        if not char.isnumeric():
+            raise NaNException("Following chars are not digits, got: {0}.".format(char))
+
+        curr_pos = self.file_input.tell()
+        while char.isnumeric():
+            value += char
             curr_pos = self.file_input.tell()
-            while char.isnumeric():
-                value += char
-                curr_pos = self.file_input.tell()
-                char = self.file_input.read(1)
+            char = self.file_input.read(1)
 
-            self.file_input.seek(curr_pos)
+        self.file_input.seek(curr_pos)
 
         return value
+
+    # OTHER HELPER FUNCTIONS BELOW
+
+    def __skip_whitespace(self):
+        curr_pos = self.file_input.tell()
+        char = self.file_input.read(1)
+        while char in string.whitespace:
+            curr_pos = self.file_input.tell()
+            char = self.file_input.read(1)
+            continue
+
+        self.file_input.seek(curr_pos)
 
 
 class TokenMismatchException(Exception):

@@ -17,7 +17,8 @@ class ScannerReadTests(TestCase):
         io.write(u"{")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_lbrace()
+        scanner.advance()
+        scanner.require_token(TokenType.lbrace)
 
         self.assertEqual(scanner.token, Token(TokenType.lbrace, u"{"))
 
@@ -26,7 +27,8 @@ class ScannerReadTests(TestCase):
         io.write(u"}")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_rbrace()
+        scanner.advance()
+        scanner.require_token(TokenType.rbrace)
 
         self.assertEqual(scanner.token, Token(TokenType.rbrace, u"}"))
 
@@ -35,7 +37,8 @@ class ScannerReadTests(TestCase):
         io.write(u"[")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_lsquare()
+        scanner.advance()
+        scanner.require_token(TokenType.lsquare)
 
         self.assertEqual(scanner.token, Token(TokenType.lsquare, u"["))
 
@@ -44,7 +47,8 @@ class ScannerReadTests(TestCase):
         io.write(u"]")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_rsquare()
+        scanner.advance()
+        scanner.require_token(TokenType.rsquare)
 
         self.assertEqual(scanner.token, Token(TokenType.rsquare, u"]"))
 
@@ -53,7 +57,8 @@ class ScannerReadTests(TestCase):
         io.write(u",")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_comma()
+        scanner.advance()
+        scanner.require_token(TokenType.comma)
 
         self.assertEqual(scanner.token, Token(TokenType.comma, u","))
 
@@ -62,7 +67,8 @@ class ScannerReadTests(TestCase):
         io.write(u":")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_colon()
+        scanner.advance()
+        scanner.require_token(TokenType.colon)
 
         self.assertEqual(scanner.token, Token(TokenType.colon, u":"))
 
@@ -71,7 +77,8 @@ class ScannerReadTests(TestCase):
         io.write(u"null")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_null()
+        scanner.advance()
+        scanner.require_token(TokenType.null)
 
         self.assertEqual(scanner.token, Token(TokenType.null, u"null"))
 
@@ -80,7 +87,8 @@ class ScannerReadTests(TestCase):
         io.write(u"true")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_true()
+        scanner.advance()
+        scanner.require_token(TokenType.true)
 
         self.assertEqual(scanner.token, Token(TokenType.true, u"true"))
 
@@ -89,7 +97,8 @@ class ScannerReadTests(TestCase):
         io.write(u"false")
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_false()
+        scanner.advance()
+        scanner.require_token(TokenType.false)
 
         self.assertEqual(scanner.token, Token(TokenType.false, u"false"))
 
@@ -99,10 +108,10 @@ class ScannerReadTests(TestCase):
         io.write(unicode_str)
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_string()
+        scanner.advance()
+        scanner.require_token(TokenType.string)
 
-        self.assertEqual(scanner.token.type, TokenType.string)
-        self.assertEqual(scanner.token.value, unicode_str)
+        self.assertEqual(scanner.token, Token(TokenType.string, unicode_str))
 
     def test_read_integer(self):
         io = StringIO()
@@ -110,10 +119,10 @@ class ScannerReadTests(TestCase):
         io.write(unicode_str)
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_number()
+        scanner.advance()
+        scanner.require_token(TokenType.number)
 
-        self.assertEqual(scanner.token.type, TokenType.number)
-        self.assertEqual(scanner.token.value, unicode_str)
+        self.assertEqual(scanner.token, Token(TokenType.number, unicode_str))
 
     def test_read_integer_with_fraction(self):
         io = StringIO()
@@ -121,10 +130,10 @@ class ScannerReadTests(TestCase):
         io.write(unicode_str)
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_number()
+        scanner.advance()
+        scanner.require_token(TokenType.number)
 
-        self.assertEqual(scanner.token.type, TokenType.number)
-        self.assertEqual(scanner.token.value, unicode_str)
+        self.assertEqual(scanner.token, Token(TokenType.number, unicode_str))
 
     def test_read_integer_with_exponent(self):
         io = StringIO()
@@ -132,10 +141,10 @@ class ScannerReadTests(TestCase):
         io.write(unicode_str)
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_number()
+        scanner.advance()
+        scanner.require_token(TokenType.number)
 
-        self.assertEqual(scanner.token.type, TokenType.number)
-        self.assertEqual(scanner.token.value, unicode_str)
+        self.assertEqual(scanner.token, Token(TokenType.number, unicode_str))
 
     def test_read_integer_with_fraction_and_exponent(self):
         io = StringIO()
@@ -143,10 +152,10 @@ class ScannerReadTests(TestCase):
         io.write(unicode_str)
         scanner = Scanner()
         scanner.file_input = io
-        scanner._read_number()
+        scanner.advance()
+        scanner.require_token(TokenType.number)
 
-        self.assertEqual(scanner.token.type, TokenType.number)
-        self.assertEqual(scanner.token.value, unicode_str)
+        self.assertEqual(scanner.token, Token(TokenType.number, unicode_str))
 
     def test_read_unterminated_string(self):
         io = StringIO()
@@ -155,7 +164,7 @@ class ScannerReadTests(TestCase):
         scanner = Scanner()
         scanner.file_input = io
         with self.assertRaises(TokenMismatchException):
-            scanner._read_string()
+            scanner.advance()
 
     def test_read_single_backslash(self):
         io = StringIO()
@@ -164,4 +173,4 @@ class ScannerReadTests(TestCase):
         scanner = Scanner()
         scanner.file_input = io
         with self.assertRaises(TokenMismatchException):
-            scanner._read_string()
+            scanner.advance()
