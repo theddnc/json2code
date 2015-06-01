@@ -2,12 +2,12 @@ import string
 
 __author__ = 'jzaczek'
 import io
-from json2code.tokens import TokenType, Token
+from tokens import TokenType, Token
 import inspect
 
 
 HEX_CHARS = u"abcdef01234567890"
-ESCAPED_CHARS = u"\ \"/bfnrt"
+ESCAPED_CHARS = u"\\\"/bfnrt"
 
 
 class Scanner:
@@ -15,7 +15,6 @@ class Scanner:
     current_byte = 0
     scanned_byte = 0
 
-    # todo: kwargs instead of args?
     def __init__(self, file_name=None):
         if file_name is not None:
             self.file_input = io.open(file_name, encoding='utf-8')
@@ -52,9 +51,9 @@ class Scanner:
             self.scanned_byte = self.current_byte
 
     def peek(self, length):
-        self.__skip_whitespace()
-
         self.file_input.seek(self.current_byte)
+
+        self.__skip_whitespace()
         value = self.file_input.read(length)
         self.file_input.seek(self.current_byte)
 

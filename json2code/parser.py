@@ -1,17 +1,31 @@
-from json2code.scanner import Scanner, TokenMismatchException, UnexpectedTokenException
-from json2code.tokens import TokenType
-from json2code.json import JSONValueModel
+from scanner import Scanner, TokenMismatchException, UnexpectedTokenException
+from tokens import TokenType
+from json_value import JSONValueModel
 
 __author__ = 'jzaczek'
 
 
 class Parser:
-    # todo: io kwarg, filename kwarg
-    # todo: option kwargs (date settings, perhaps fuzzy json parse?
+    # todo: think of option kwargs (perhaps fuzzy json parse?)
     def __init__(self, **kwargs):
+        """
+        :param kwargs:
+            simple_value: default True, if set to False uses JSONValueModel
+            file_name: name of the file to parse
+            io: string io, pass if file_name is None
+            predict_references: default False, if true will try to predict links in data model
+        :return:
+        """
+        self.simple_value = kwargs.get("simple_value", True)
+        self.predict_references = kwargs.get("predict_references", False)
+        file_name = kwargs.get("file_name", None)
+        io = kwargs.get("io", None)
+
         self.parsed_string = u""
         self.result = {}
-        self.scanner = Scanner()
+        self.scanner = Scanner(file_name)
+        if file_name is None and io is not None:
+            self.scanner.file_input = io
 
     def parse_json(self):
         """
@@ -45,6 +59,10 @@ class Parser:
             return self.__parse_number()
 
     def __parse_object(self):
+        """
+        Parses object
+        :return: parsed dictionary
+        """
         result = {}
         self.__advance_requiring(TokenType.lbrace)
         try:
@@ -58,7 +76,7 @@ class Parser:
     def __parse_array(self):
         """
         Parses array of values
-        :return: parsed JSONValue
+        :return: parsed list
         """
         result = []
         self.__advance_requiring(TokenType.lsquare)
@@ -73,13 +91,16 @@ class Parser:
     def __parse_members(self):
         """
         Parses members of potential object
-        :return: JSONValue filled with members
+        :return: dictionary with members
         """
         result = {}
         while True:
             try:
                 name, value = self.__parse_pair()
-                result[name] = JSONValueModel(name, value)
+                if self.simple_value is False:
+                    result[name] = JSONValueModel(name, value, predict_references=self.predict_references)
+                else:
+                    result[name] = value
             except UnexpectedTokenException:
                 raise UnexpectedTokenException
             try:
@@ -92,7 +113,7 @@ class Parser:
     def __parse_pair(self):
         """
         Parses pair of string: value
-        :return: parsed JSONValue
+        :return: name and value
         """
         name = self.__parse_string()
         self.__advance_requiring(TokenType.colon)
@@ -106,7 +127,7 @@ class Parser:
     def __parse_elements(self):
         """
         Parses elements of potential array
-        :return: JSONValue filled with elements
+        :return: list filled with elements
         """
         array = []
         while True:
@@ -120,7 +141,7 @@ class Parser:
 
     def __parse_string(self):
         self.__advance_requiring(TokenType.string)
-        return self.scanner.token.value[1:-1]   # removes enclosing quotes
+        return self.scanner.token.value[1:-1]  # removes enclosing quotes
 
     def __parse_number(self):
         self.__advance_requiring(TokenType.number)

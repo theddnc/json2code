@@ -1,5 +1,5 @@
 from io import StringIO
-from json2code.json import JSONValueType
+from json2code.json_value import JSONValueType
 from json2code.scanner import UnexpectedTokenException, TokenMismatchException
 
 __author__ = 'jzaczek'
@@ -18,9 +18,7 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"mati\":123.30e2,\"tadzik\":{\"grzes\":true}}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
-
+        parser = Parser(simple_value=False, io=io)
         parser.parse_json()
         result = parser.result
 
@@ -31,27 +29,27 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"object_id\":123,\"float_v\":1.65e-2,\"array_v\":[null,false,true,10],\"string_v\":\"string!\"}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io, predict_references=True)
 
         parser.parse_json()
         result = parser.result
         self.assertEqual(result[u"object_id"].v, 123)
         self.assertEqual(result[u"object_id"].predicted_type, JSONValueType.id)
-        self.assertEqual(result[u"object_id"].predicted_reference, u"object")
         self.assertEqual(result[u"float_v"].v, 0.0165)
+        self.assertEqual(result[u"float_v"].predicted_type, JSONValueType.float)
         self.assertEqual(result[u"array_v"].v[0], None)
         self.assertEqual(result[u"array_v"].v[1], False)
         self.assertEqual(result[u"array_v"].v[2], True)
         self.assertEqual(result[u"array_v"].v[3], 10)
+        self.assertEqual(result[u"array_v"].predicted_type, JSONValueType.array)
         self.assertEqual(result[u"string_v"].v, u"string!")
+        self.assertEqual(result[u"string_v"].predicted_type, JSONValueType.string)
 
     def test_parse_malformed_array(self):
         io = StringIO()
         unicode_str = u"{\"array\":[1, 2, 3, 4,]}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         with self.assertRaises(MalformedArrayException):
             parser.parse_json()
@@ -60,8 +58,7 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"array\":[1, 2, 3, 4], \"another_member\": 34,}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         with self.assertRaises(MalformedObjectException):
             parser.parse_json()
@@ -70,8 +67,7 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"array\":[1, {2, 3, 4]}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         with self.assertRaises(UnexpectedTokenException):
             parser.parse_json()
@@ -80,8 +76,7 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"array\":[1, 2, 3, 4], \"obj\": 23, []}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         with self.assertRaises(UnexpectedTokenException):
             parser.parse_json()
@@ -90,8 +85,7 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"mama\": \"grazyna\"\"gra\",\"tata\":\"bedzie blad\"}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         with self.assertRaises(UnexpectedTokenException):
             parser.parse_json()
@@ -100,8 +94,7 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"array\":[1, 2, 3, 4], \"obj\": error}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         with self.assertRaises(TokenMismatchException):
             parser.parse_json()
@@ -110,8 +103,7 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"array\":[1, 2, 3, 4], \"obj\"\": 23, []}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         with self.assertRaises(TokenMismatchException):
             parser.parse_json()
@@ -120,8 +112,7 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"I'm sorry"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         with self.assertRaises(TokenMismatchException):
             parser.parse_json()
@@ -130,9 +121,24 @@ class ParserTests(TestCase):
         io = StringIO()
         unicode_str = u"{\"date\":\"2008-09-03T20:56:35.450686Z\"}"
         io.write(unicode_str)
-        parser = Parser()
-        parser.scanner.file_input = io
+        parser = Parser(simple_value=False, io=io)
 
         parser.parse_json()
         result = parser.result
         self.assertEqual(result[u"date"].predicted_type, JSONValueType.date)
+
+    def test_parse_simple_value(self):
+        io = StringIO()
+        unicode_str = u"{\"object_id\":123,\"float_v\":1.65e-2,\"array_v\":[null,false,true,10],\"string_v\":\"string!\"}"
+        io.write(unicode_str)
+        parser = Parser(io=io)
+
+        parser.parse_json()
+        result = parser.result
+        self.assertEqual(result[u"object_id"], 123)
+        self.assertEqual(result[u"float_v"], 0.0165)
+        self.assertEqual(result[u"array_v"][0], None)
+        self.assertEqual(result[u"array_v"][1], False)
+        self.assertEqual(result[u"array_v"][2], True)
+        self.assertEqual(result[u"array_v"][3], 10)
+        self.assertEqual(result[u"string_v"], u"string!")
