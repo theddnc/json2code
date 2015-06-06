@@ -1,0 +1,17 @@
+{
+	"id": 10,
+	"first_name": "John",
+	"last_name": "Doe",
+	"post_uris": [
+		"/api/v1/post/243/", "/api/v1/post/244/", "/api/v1/post/245/"
+	],
+	"post_stubs": [
+		{
+			"title": "Title",
+			"likes": 45
+		}],
+	"profile_photo": {
+		"id": 45,
+		"file_name": "goat.jpg"
+	}
+}

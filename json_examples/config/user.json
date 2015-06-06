@@ -1,0 +1,9 @@
+{
+	"!@#$ORIGIN$#@!":"user.json",
+	"first_name": "string",
+	"last_name": "string",
+	"post_uris": "[:post:uri]",
+	"post_stubs": "[:post:post_stubs:full]",
+	"profile_photo": ":photo:profile_photo:full",
+	"id": "int"
+}

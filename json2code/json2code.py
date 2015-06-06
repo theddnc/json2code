@@ -65,10 +65,6 @@ def from_data(floc, fl):
 
 
 def from_config(floc, fl):
-    predict_references = False
-    if "p" in fl:
-        predict_references = True
-
     code_gen = CodeGenerator(floc)
     code_gen.generate()
 

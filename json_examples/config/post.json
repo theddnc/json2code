@@ -1,0 +1,7 @@
+{
+	"!@#$ORIGIN$#@!":"post.json",
+	"body": "string",
+	"user_id": ":user:id",
+	"id": "int",
+	"title": "string"
+}

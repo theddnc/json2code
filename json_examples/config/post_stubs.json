@@ -1,0 +1,5 @@
+{
+	"!@#$ORIGIN$#@!":"user.json",
+	"likes": "int",
+	"title": "string"
+}

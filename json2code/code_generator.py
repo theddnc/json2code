@@ -28,9 +28,9 @@ SWIFTY_JSON_TYPES_MAP = {
     "array": "arrayValue"
 }
 
-DISCLAIMER = "// Please note that the code below is automatically generated and may be \n" \
-             "// incomplete or redundant. Please make sure to verify these class \n" \
-             "// specifications and apply proper changes to lines marked by comments. \n" \
+DISCLAIMER = "// Please note that the code below is automatically generated and may be\n" \
+             "// incomplete or redundant. Please make sure to verify these class\n" \
+             "// specifications and apply proper changes to lines marked by comments.\n" \
              "//\n" \
              "// Thanks for using json2code!\n"
 
@@ -41,6 +41,8 @@ class CodeGenerator:
             config_location += "/"
 
         self.built_in_types_map = kwargs.get("types_map", SWIFT_TYPES_MAP)
+        self.persist_output = kwargs.get("persist_output", False)
+        self.output = None
         self.config_location = config_location
         self.file_names = []
         self.parsed_values = []
@@ -108,7 +110,10 @@ class CodeGenerator:
 
             output += "}\n\n"
 
-        print output
+        if self.persist_output:
+            self.output = output
+        else:
+            print output
 
     def __get_member_declaration(self, key, value):
         # exception for fields describing objects themselves, not other references to other objects
@@ -155,7 +160,7 @@ class CodeGenerator:
     @classmethod
     def __add_to_json_method(cls, body):
         function = "\tfunc toJson() -> JSON {\n"
-        function += "\t\tvar json: JSON = JSON({})\n"
+        function += "\t\tvar json: JSON = JSON([String: AnyObject]())\n"
         function += body
         function += "\t\treturn json\n"
         function += "\t}"
@@ -250,7 +255,7 @@ class CodeGenerator:
         to_json = "json[\"{0}\"]".format(key)
 
         if ref_type == u"full":
-            to_json += " = self.{0}.toJson() ".format(utils.to_camel_case(key, capital=False))
+            to_json += " = self.{0}.toJson()".format(utils.to_camel_case(key, capital=False))
             del possible_refs[0]
             to_json += cls.__get_other_possible_refs(possible_refs)
         elif ref_type == u"id":
