@@ -37,7 +37,9 @@ name, and value is class member's type. Valid basic types are: `string`, `int`, 
 of `[JSON]`. Arrays of all types are done by adding square brackets around the type: `[int]`.
 
 Reference types have special formatting, which looks like this: 
+
 `:predicted_type:other_type:another_type:...:full|id|uri`
+
 `:` indicates that this is a reference to other class, list of `predicted_type:...:` is a list of possible type 
 references and `full|id|uri` is an indication of reference method - either full object dictionary, id or resource uri.
 
